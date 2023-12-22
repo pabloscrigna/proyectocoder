@@ -4,8 +4,9 @@ from django.db import models
 class Profesor(models.Model):
 
     nombre = models.CharField(max_length=20)
-    apellido = models.CharField(max_length=30, blank=True, null=True)
+    apellido = models.CharField(max_length=30, null=True)
     email = models.EmailField()
+    creado = models.DateTimeField(null=True)
 
     class Meta:
         verbose_name_plural = "Profesores"
@@ -19,6 +20,9 @@ class Estudiante(models.Model):
     nombre = models.CharField(max_length=20)
     apellido = models.CharField(max_length=20)
     email = models.EmailField()
+
+    def __str__(self):
+        return f"{self.nombre}, {self.apellido} -- {self.email}"
 
     def __str_(self):
         return f"{self.nombre}, {self.apellido}"

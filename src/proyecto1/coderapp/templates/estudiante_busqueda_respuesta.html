@@ -1,0 +1,14 @@
+{% extends 'padre.html' %}
+{% load static %}
+{% block contenidoQueCambia %}
+
+<h2>Resultados de Busqueda</h2>
+
+{% if estudiante %}
+<li>Nombre: {{nombre}}</li>
+
+{% else%}
+<h2>No se encontro el estudiante</h2>
+{% endif %}
+
+{% endblock %}

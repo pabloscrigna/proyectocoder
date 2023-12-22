@@ -1,0 +1,14 @@
+{% extends 'padre.html' %}
+{% load static %}
+{% block contenidoQueCambia %}
+
+<form action="{% url 'profesores' %}" method="post">{% csrf_token %}
+
+    <!-- Aca va nuestro formulario -->
+    <table>
+        {{formulario.as_table}}
+    </table>
+    <input type="submit" value="Enviar">
+</form>
+
+{% endblock %}

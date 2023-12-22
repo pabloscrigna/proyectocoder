@@ -1,0 +1,14 @@
+{% extends 'padre.html' %}
+{% load static %}
+{% block contenidoQueCambia %}
+
+<form action="{% url 'busqueda_estudiante' %}" method="get">
+
+    <!-- Aca va nuestro formulario -->
+    <table>
+        {{formulario.as_table}}
+    </table>
+    <input type="submit" value="Enviar">
+</form>
+
+{% endblock %}

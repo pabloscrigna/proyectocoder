@@ -1,8 +1,10 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from coderapp.models import Profesor, Curso
-from coderapp.forms import CursoFormulario
+from coderapp.models import Profesor, Curso, Estudiante
+from coderapp.forms import CursoFormulario, EstudianteBusqueda, ProfesorFormulario
+
+from datetime import datetime
 
 def leer_profesor(request):
 
@@ -29,11 +31,54 @@ def index(request):
 
 
 def profesores(request):
-    return render(request, 'profesores.html')
+
+    if request.method == "POST":
+        
+        formulario = ProfesorFormulario(request.POST)
+
+        if formulario.is_valid():
+
+            datos_profesor = formulario.cleaned_data
+            print(datos_profesor)
+
+            nombre = datos_profesor.get("nombre")
+            apellido = datos_profesor.get("apellido")
+            email = datos_profesor.get("email")
+            creado = datetime.now()
+
+
+            profesor = Profesor(nombre=nombre,apellido=apellido,email=email,creado=creado)
+
+            profesor.save()
+
+            return render(request, "alta_profesor_respuesta.html", {"profesor": profesor})
+
+    else:
+
+        formulario = ProfesorFormulario()
+
+    return render(request, 'profesores_alta.html', {"formulario": formulario})
 
 
 def estudiantes(request):
-    return render(request, 'estudiantes.html')
+
+    formulario = EstudianteBusqueda()
+
+    return render(request, 'estudiante_busqueda.html', {"formulario": formulario})
+
+
+def busqueda_estudiante(request):
+    
+    if request.method == "GET":
+
+        email = request.GET.get("email")
+
+        if email is None:
+            return HttpResponse("Debe enviar un email")    
+
+        estudiante = Estudiante.objects.filter(email=email)
+        print(estudiante)
+        return render(request, 'estudiante_busqueda_respuesta.html', {"estudiante": estudiante})
 
 
 def cursos(request):

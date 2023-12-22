@@ -1,0 +1,12 @@
+{% extends 'padre.html' %}
+{% load static %}
+{% block contenidoQueCambia %}
+
+<h2>Alta Profesor</h2>
+
+<li>Nombre: {{profesor.nombre}}</li>
+<li>Apellido: {{profesor.apellido}}</li>
+<li>email: {{profesor.email}}</li>
+<li>creado: {{profesor.creado}}</li>
+
+{% endblock %}
