@@ -77,7 +77,6 @@ def busqueda_estudiante(request):
             return HttpResponse("Debe enviar un email")    
 
         estudiante = Estudiante.objects.filter(email=email)
-        print(estudiante)
         return render(request, 'estudiante_busqueda_respuesta.html', {"estudiante": estudiante})
 
 

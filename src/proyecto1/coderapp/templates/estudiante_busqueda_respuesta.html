@@ -5,8 +5,11 @@
 <h2>Resultados de Busqueda</h2>
 
 {% if estudiante %}
-<li>Nombre: {{nombre}}</li>
-
+{% for estud in estudiante %}
+<li>Nombre: {{estud.nombre}}</li>
+<li>Apellido: {{estud.apellido}}</li>
+<li>email: {{estud.email}}</li>
+{% endfor %}
 {% else%}
 <h2>No se encontro el estudiante</h2>
 {% endif %}
