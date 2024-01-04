@@ -2,7 +2,11 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 from coderapp.models import Profesor, Curso
-from coderapp.forms import CursoFormulario
+from coderapp.forms import CursoFormulario, ProfesorFormulario
+
+from django.views.generic import ListView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
 def leer_profesor(request):
 
@@ -29,7 +33,31 @@ def index(request):
 
 
 def profesores(request):
-    return render(request, 'profesores.html')
+    
+    if request.method == "POST":
+        
+        # leer los datos que vienen en el post
+        datos_profesor = ProfesorFormulario(request.POST)
+
+        print(datos_profesor)
+
+        if datos_profesor.is_valid():
+
+            datos = datos_profesor.cleaned_data
+
+            nombre = datos.get("nombre")
+            apellido = datos.get("apellido")
+            email = datos.get("email")
+
+            profesor = Profesor(nombre=nombre, apellido=apellido, email=email)
+            profesor.save()
+
+            return render(request, 'index.html')
+
+    else:
+        profesorFormulario = ProfesorFormulario()
+
+    return render(request, 'crear_profesor.html', {"profesorFormulario": profesorFormulario})
 
 
 def estudiantes(request):
@@ -91,7 +119,7 @@ def curso_formulario(request):
             nombre = datos.get("curso")
             camada = datos.get("camada")
 
-            curso = Curso(nombre=nombre,camada=camada)
+            curso = Curso(nombre=nombre, camada=camada)
 
             curso.save()
 
@@ -134,3 +162,63 @@ def buscar_camada(request):
         }
 
         return render(request, "busqueda.html", contexto)
+    
+
+def leer_profesores(request):
+
+    profesores = Profesor.objects.all()
+
+    contexto = {"profesores": profesores}
+
+
+    return render(request, 'leer_profesores.html', contexto)
+
+
+def eliminar_profesor(request, nombre_profesor):
+
+    profesor = Profesor.objects.get(nombre=nombre_profesor)
+
+    profesor.delete()
+
+    profesores = Profesor.objects.all()
+    contexto = {"profesores": profesores}
+
+    return render(request, 'leer_profesores.html', contexto)
+
+
+# Vistas basadas en clases para el modelo Curso
+
+class CursoList(ListView):
+
+    model = Curso
+    template_name = 'cursos_list.html'
+
+
+class CursoDetalle(DetailView):
+
+    model = Curso
+    template_name = 'curso_detalle.html'
+
+
+class CursoCreacion(CreateView):
+
+    model = Curso
+    fields = ['nombre', 'camada']
+    template_name = 'curso_form.html'
+    success_url = "/coder-app/curso/list"
+
+
+class CursoUpdate(UpdateView):
+    
+    model = Curso
+    fields = ['nombre', 'camada']
+    template_name = 'curso_form.html'
+    success_url ="/coder-app/curso/list"
+
+class CursoDelete(DeleteView):
+    
+    model = Curso
+    template_name = "curso_confirm_delete.html"
+    success_url = "/coder-app/curso/list"
+
+
