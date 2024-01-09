@@ -2,7 +2,15 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 from coderapp.models import Profesor, Curso
-from coderapp.forms import CursoFormulario
+from coderapp.forms import CursoFormulario, ProfesorFormulario
+
+from django.views.generic import ListView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
 
 def leer_profesor(request):
 
@@ -27,9 +35,33 @@ def leer_alumnos(request):
 def index(request):
     return render(request, 'index.html')
 
-
+@login_required
 def profesores(request):
-    return render(request, 'profesores.html')
+    
+    if request.method == "POST":
+        
+        # leer los datos que vienen en el post
+        datos_profesor = ProfesorFormulario(request.POST)
+
+        print(datos_profesor)
+
+        if datos_profesor.is_valid():
+
+            datos = datos_profesor.cleaned_data
+
+            nombre = datos.get("nombre")
+            apellido = datos.get("apellido")
+            email = datos.get("email")
+
+            profesor = Profesor(nombre=nombre, apellido=apellido, email=email)
+            profesor.save()
+
+            return render(request, 'index.html')
+
+    else:
+        profesorFormulario = ProfesorFormulario()
+
+    return render(request, 'crear_profesor.html', {"profesorFormulario": profesorFormulario})
 
 
 def estudiantes(request):
@@ -91,7 +123,7 @@ def curso_formulario(request):
             nombre = datos.get("curso")
             camada = datos.get("camada")
 
-            curso = Curso(nombre=nombre,camada=camada)
+            curso = Curso(nombre=nombre, camada=camada)
 
             curso.save()
 
@@ -134,3 +166,135 @@ def buscar_camada(request):
         }
 
         return render(request, "busqueda.html", contexto)
+    
+
+def leer_profesores(request):
+
+    profesores = Profesor.objects.all()
+
+    contexto = {"profesores": profesores}
+
+
+    return render(request, 'leer_profesores.html', contexto)
+
+
+def eliminar_profesor(request, nombre_profesor):
+
+    profesor = Profesor.objects.get(nombre=nombre_profesor)
+
+    profesor.delete()
+
+    profesores = Profesor.objects.all()
+    contexto = {"profesores": profesores}
+
+    return render(request, 'leer_profesores.html', contexto)
+
+def editar_profesor(request, nombre_profesor):
+
+    profesor = Profesor.objects.get(nombre=nombre_profesor)
+
+
+    if request.method == "POST":
+        
+        formulario = ProfesorFormulario(request.POST)
+
+        if formulario.is_valid():
+
+            datos_profesor = formulario.cleaned_data
+
+            profesor.nombre = datos_profesor.get("nombre")
+            profesor.apellido = datos_profesor.get("apellido")
+            profesor.email = datos_profesor.get("email")
+
+            profesor.save()
+
+            return render(request, 'index.html')
+
+    formulario = ProfesorFormulario(initial={"nombre":profesor.nombre, "apellido":profesor.apellido, "email":profesor.email})
+
+    return render(request, "editar_profesor.html", {"formulario": formulario, "profesor_nombre": nombre_profesor})
+
+
+def login_request(request):
+
+    if request.method == "POST":
+
+        form = AuthenticationForm(request, data=request.POST)
+
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+
+                return render(request, 'index.html', {"mensaje": f"Bienvenido {username}"})                
+            else:
+                return render(request, 'index.html', {"mensaje": f"Usuario o contraseña invalidos"})
+
+        else:
+            return render(request, "index.html", {"mensaje": "Datos form incorrectos"})
+
+    form = AuthenticationForm()
+
+    return render(request, "login.html", {"form": form})
+
+
+def registrar(request):
+
+    if request.method == "POST":
+        
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+
+            username = form.cleaned_data.get("username")
+            
+            form.save()
+
+            return render(request, "index.html", {"mensaje": f"Se dio de alta el usuario {username}"} )
+
+    form = UserCreationForm()
+
+    return render(request, "registro.html", {"form": form})
+
+
+
+# Vistas basadas en clases para el modelo Curso
+
+class CursoList(ListView):
+
+    model = Curso
+    template_name = 'cursos_list.html'
+
+
+class CursoDetalle(DetailView):
+
+    model = Curso
+    template_name = 'curso_detalle.html'
+
+
+class CursoCreacion(CreateView):
+
+    model = Curso
+    fields = ['nombre', 'camada']
+    template_name = 'curso_form.html'
+    success_url = "/coder-app/curso/list"
+
+
+class CursoUpdate(UpdateView):
+    
+    model = Curso
+    fields = ['nombre', 'camada']
+    template_name = 'curso_form.html'
+    success_url ="/coder-app/curso/list"
+
+class CursoDelete(DeleteView):
+    
+    model = Curso
+    template_name = "curso_confirm_delete.html"
+    success_url = "/coder-app/curso/list"
+
+
