@@ -8,6 +8,10 @@ from django.views.generic import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
+
 def leer_profesor(request):
 
     print("Vista profesor")
@@ -31,7 +35,7 @@ def leer_alumnos(request):
 def index(request):
     return render(request, 'index.html')
 
-
+@login_required
 def profesores(request):
     
     if request.method == "POST":
@@ -184,6 +188,78 @@ def eliminar_profesor(request, nombre_profesor):
     contexto = {"profesores": profesores}
 
     return render(request, 'leer_profesores.html', contexto)
+
+def editar_profesor(request, nombre_profesor):
+
+    profesor = Profesor.objects.get(nombre=nombre_profesor)
+
+
+    if request.method == "POST":
+        
+        formulario = ProfesorFormulario(request.POST)
+
+        if formulario.is_valid():
+
+            datos_profesor = formulario.cleaned_data
+
+            profesor.nombre = datos_profesor.get("nombre")
+            profesor.apellido = datos_profesor.get("apellido")
+            profesor.email = datos_profesor.get("email")
+
+            profesor.save()
+
+            return render(request, 'index.html')
+
+    formulario = ProfesorFormulario(initial={"nombre":profesor.nombre, "apellido":profesor.apellido, "email":profesor.email})
+
+    return render(request, "editar_profesor.html", {"formulario": formulario, "profesor_nombre": nombre_profesor})
+
+
+def login_request(request):
+
+    if request.method == "POST":
+
+        form = AuthenticationForm(request, data=request.POST)
+
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+
+                return render(request, 'index.html', {"mensaje": f"Bienvenido {username}"})                
+            else:
+                return render(request, 'index.html', {"mensaje": f"Usuario o contraseña invalidos"})
+
+        else:
+            return render(request, "index.html", {"mensaje": "Datos form incorrectos"})
+
+    form = AuthenticationForm()
+
+    return render(request, "login.html", {"form": form})
+
+
+def registrar(request):
+
+    if request.method == "POST":
+        
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+
+            username = form.cleaned_data.get("username")
+            
+            form.save()
+
+            return render(request, "index.html", {"mensaje": f"Se dio de alta el usuario {username}"} )
+
+    form = UserCreationForm()
+
+    return render(request, "registro.html", {"form": form})
+
 
 
 # Vistas basadas en clases para el modelo Curso
