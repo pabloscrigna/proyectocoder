@@ -1,8 +1,14 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from coderapp.models import Profesor, Curso
-from coderapp.forms import CursoFormulario, ProfesorFormulario
+from coderapp.models import Profesor, Curso, Avatar
+from coderapp.forms import (
+    CursoFormulario, 
+    ProfesorFormulario, 
+    UserRegistrationForm,
+    UserEditForm,
+    AvatarFormulario,
+)
 
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
@@ -11,6 +17,8 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+
 
 def leer_profesor(request):
 
@@ -33,6 +41,11 @@ def leer_alumnos(request):
 
 
 def index(request):
+
+    if request.user.is_authenticated:
+        avatar = Avatar.objects.filter(user=request.user.id)
+        return render(request, 'index.html', {"url": avatar[0].image.url})
+
     return render(request, 'index.html')
 
 @login_required
@@ -246,7 +259,8 @@ def registrar(request):
 
     if request.method == "POST":
         
-        form = UserCreationForm(request.POST)
+        # form = UserCreationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
 
         if form.is_valid():
 
@@ -256,10 +270,57 @@ def registrar(request):
 
             return render(request, "index.html", {"mensaje": f"Se dio de alta el usuario {username}"} )
 
-    form = UserCreationForm()
+    # form = UserCreationForm()
+    form = UserRegistrationForm()    
 
     return render(request, "registro.html", {"form": form})
 
+
+@login_required
+def editar_perfil(request):
+
+    usuario = request.user
+
+    if request.method == "POST":
+        
+        formulario = UserEditForm(request.POST)
+
+        if formulario.is_valid():
+
+            informacion = formulario.cleaned_data
+
+            usuario.email = informacion.get("email")
+            usuario.password1 = informacion.get("password1")
+            usuario.password2 = informacion.get("password2")
+            usuario.last_name = informacion.get("last_name")
+            usuario.first_name = informacion.get("first_name")
+
+            usuario.save()
+
+            return render(request, "index.html")
+
+    formulario = UserEditForm(initial={"email": usuario.email })
+
+    return render(request, "editar_usuario.html", {"formulario": formulario}) 
+
+@login_required
+def avatar(request):
+
+    if request.method == "POST":
+        print("Post")
+        formulario = AvatarFormulario(request.POST, request.FILES)
+
+        if formulario.is_valid():
+
+            user = User.objects.get(username=request.user)   
+            avatar = Avatar(user=user, image=formulario.cleaned_data.get("image"))
+            avatar.save()
+
+            return render(request, 'index.html')
+
+    formulario = AvatarFormulario()
+
+    return render(request, 'avatar.html', {"formulario": formulario})
 
 
 # Vistas basadas en clases para el modelo Curso
