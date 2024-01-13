@@ -15,6 +15,7 @@ from coderapp.views import (
     editar_profesor,
     login_request,
     registrar,
+    editar_perfil,
     CursoList,
     CursoDetalle,
     CursoCreacion,
@@ -41,5 +42,6 @@ urlpatterns = [
     path("login", login_request, name='Login'),
     path("registrar", registrar, name='Registrar'),
     path("logout", LogoutView.as_view(template_name="logout.html"), name='Logout'),
+    path('editar_perfil', editar_perfil, name='editar_perfil'),
     path("", index, name='index'),
 ]

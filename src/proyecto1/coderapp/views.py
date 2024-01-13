@@ -2,7 +2,12 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 from coderapp.models import Profesor, Curso
-from coderapp.forms import CursoFormulario, ProfesorFormulario
+from coderapp.forms import (
+    CursoFormulario, 
+    ProfesorFormulario, 
+    UserRegistrationForm,
+    UserEditForm,
+)
 
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
@@ -246,7 +251,8 @@ def registrar(request):
 
     if request.method == "POST":
         
-        form = UserCreationForm(request.POST)
+        # form = UserCreationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
 
         if form.is_valid():
 
@@ -256,10 +262,41 @@ def registrar(request):
 
             return render(request, "index.html", {"mensaje": f"Se dio de alta el usuario {username}"} )
 
-    form = UserCreationForm()
+    # form = UserCreationForm()
+    form = UserRegistrationForm()
 
     return render(request, "registro.html", {"form": form})
 
+
+@login_required
+def editar_perfil(request):
+
+    usuario = request.user
+
+    if request.method == "POST":
+
+        formulario = UserEditForm(request.POST)
+
+        if formulario.is_valid():
+
+            informacion = formulario.cleaned_data
+
+            usuario.email = informacion.get('email')
+            usuario.password1 = informacion.get('password1')
+            usuario.password2 = informacion.get('password2')
+            usuario.last_name = informacion.get('last_name')
+            usuario.first_name = informacion.get('first_name')
+
+            usuario.save()
+
+            return render(request, 'index.html')
+
+    else:
+
+        formulario = UserEditForm(initial={'email': usuario.email})
+
+        return render(request, 'editar_perfil.html', {"formulario": formulario, "usuario": usuario})
+    
 
 
 # Vistas basadas en clases para el modelo Curso
